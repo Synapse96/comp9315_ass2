@@ -55,7 +55,27 @@ Query startQuery(Reln r, char *q, char sigs)
 void scanAndDisplayMatchingTuples(Query q)
 {
 	assert(q != NULL);
-	//TODO
+	Bits pages = q->pages;
+	Reln r = q->rel;
+	data = dataFile(r);
+	int i,j, matches;
+	for(i = 0; i < pages->nbytes; i++) {
+		q->curpage = i;
+		if(!bitIsSet(pages,i)) {
+			continue;
+		}
+		Page p = getPage(data,q->curpage)
+		for(j = 0; j < PAGESIZE; j++) {
+			Tuple t = getTupleFromPage(r,p,j);
+			//check if tuple T == q->qstring
+			t->showTuple(r,t);
+			matches++;
+		}
+		if(matches == 0) {
+			q->nfalse++;
+		}
+		ntuppages++;
+	}
 }
 
 // print statistics on query
