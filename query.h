@@ -34,5 +34,6 @@ Query startQuery(Reln, char *, char);
 void  scanAndDisplayMatchingTuples(Query);
 void  queryStats(Query);
 void  closeQuery(Query);
+Bool tupleStringcmp(Reln r, Tuple t, char *qstring);
 
 #endif

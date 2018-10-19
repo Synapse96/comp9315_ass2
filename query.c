@@ -57,26 +57,55 @@ void scanAndDisplayMatchingTuples(Query q)
 	assert(q != NULL);
 	Bits pages = q->pages;
 	Reln r = q->rel;
-	data = dataFile(r);
-	int i,j, matches;
-	for(i = 0; i < pages->nbytes; i++) {
+	File dataF = dataFile(r);
+	int matches;
+	int n = getNumBits(pages);
+	for(int i = 0; i < n; i++) {
 		q->curpage = i;
 		if(!bitIsSet(pages,i)) {
 			continue;
 		}
-		Page p = getPage(data,q->curpage)
-		for(j = 0; j < PAGESIZE; j++) {
-			Tuple t = getTupleFromPage(r,p,j);
+		Page p = getPage(dataF,q->curpage);
+		q->ntuppages++;
+		for(int j = 0; j < pageNitems(p); j++) {
+			q->curtup = j;
+			Tuple t = getTupleFromPage(r,p,q->curtup);
+			q->ntuples++;
+
+			//TESTING TSIGS
+			//Bits tSig = makeTupleSig(r,t);
+			//showBits(tSig);
+
 			//check if tuple T == q->qstring
-			t->showTuple(r,t);
-			matches++;
+			if(tupleStringcmp(r,t,q->qstring)) {
+				showTuple(r,t);
+				matches++;
+			}
 		}
 		if(matches == 0) {
 			q->nfalse++;
 		}
-		ntuppages++;
 	}
 }
+
+Bool tupleStringcmp(Reln r, Tuple t, char *qstring) {
+	char **tupVals = tupleVals(r,t);
+    char *pt;
+    int i = 0;
+    pt = strtok (qstring,",");
+    while (pt != NULL) {
+    	char *val = tupVals[i];
+        if(strcmp(pt,"?") != 0) {
+			if(strcmp(val,pt) != 0) {
+				return FALSE;
+			}
+        }
+        i++;
+        pt = strtok (NULL, ",");
+    }
+	return TRUE;
+}
+
 
 // print statistics on query
 

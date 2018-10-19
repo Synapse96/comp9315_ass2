@@ -163,6 +163,15 @@ void putBits(Page p, Offset pos, Bits b)
 	memcpy(b->bitstring, addr, b->nbytes);
 }
 
+
+Count getNumBits(Bits b) {
+	return b->nbits;
+}
+
+Count getNumBytes(Bits b) {
+	return b->nbytes;
+}
+
 // show Bits on stdout
 // display in order MSB to LSB
 // do not append '\n'

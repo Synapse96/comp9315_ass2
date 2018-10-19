@@ -23,6 +23,8 @@ void andBits(Bits, Bits);
 void orBits(Bits, Bits);
 void getBits(Page, Offset, Bits);
 void putBits(Page, Offset, Bits);
+Count getNumBits(Bits b);
+Count getNumBytes(Bits b);
 void showBits(Bits);
 
 #endif
