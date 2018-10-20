@@ -63,7 +63,7 @@ Bool isSubset(Bits b1, Bits b2)
 	for (int i = 0; i <= b1->nbytes - 1; i++) {
 	    for (int j = 0; j <= 7; j++) {
 	        int position = j + i + (i * 7);
-	        if (bitIsSet(b1, position) != bitIsSet(b2, position)) {
+	        if (bitIsSet(b1, position) && !bitIsSet(b2, position)) {
 	            return FALSE;
 	        }
 	    }
@@ -151,7 +151,7 @@ void orBits(Bits b1, Bits b2)
 void getBits(Page p, Offset pos, Bits b)
 {
 	Byte *addr = addrInPage(p, pos, b->nbytes);
-	memcpy(addr, b->bitstring, b->nbytes);
+	memcpy(b->bitstring, addr, b->nbytes);
 }
 
 // copy the bit-string array in a BitsRep
@@ -160,7 +160,7 @@ void getBits(Page p, Offset pos, Bits b)
 void putBits(Page p, Offset pos, Bits b)
 {
 	Byte *addr = addrInPage(p, pos, b->nbytes);
-	memcpy(b->bitstring, addr, b->nbytes);
+	memcpy(addr, b->bitstring, b->nbytes);
 }
 
 
