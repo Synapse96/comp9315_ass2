@@ -38,13 +38,20 @@ void findPagesUsingPageSigs(Query q)
 		for (int j = 0; j < pageNitems(p); j++) {
 			Bits psig = newBits(psigBits(r));
 			getBits(p, j, psig);
+			printf("qsig-1 = "); showBits(qsig); printf("\n");
+			printf("psig-1 = "); showBits(qsig); printf("\n");
 			if (isSubset(qsig, psig)) {
 				setBit(q->pages, i);
 			}
+			printf("psig-3 = "); showBits(qsig); printf("\n");
 			q->nsigs++;
 		}
 		q->nsigpages++;
 	}
+	
+	// The printf below is primarily for debugging
+	// Remove it before submitting this function
+	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
 
 Bits pagecodeword(char *attr_value, int m, int k)

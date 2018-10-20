@@ -158,11 +158,16 @@ PageID addToRelation(Reln r, Tuple t)
 
 	// compute page signature and add to psigf
 	PageID p_pid = rp->psigNpages-1;
-	if (p_pid == 0) { // empty
-		addPage(r->psigf);
-		rp->psigNpages++;
-		p_pid++;
-		Page p_p = getPage(r->psigf, p_pid);
+	Page p_p = getPage(r->psigf, p_pid);
+	if (NEWPAGE || rp->npsigs == 0) { // first entry or new page
+		if (pageNitems(p_p) == rp->psigPP) {
+			addPage(r->psigf);
+			rp->psigNpages++;
+			p_pid++;
+			p_p = newPage();
+			if (p_p == NULL) return NO_PAGE;
+		}
+		// put tuple in page
 		Bits psig = makePageSig(r, t);
 		putBits(p_p, pageNitems(p_p), psig);
 		addOneItem(p_p);
@@ -170,30 +175,12 @@ PageID addToRelation(Reln r, Tuple t)
 		rp->npsigs++;
 		putPage(r->psigf, p_pid, p_p);
 	} else {
-		Page p_p = getPage(r->psigf, p_pid);
-		if (NEWPAGE) {
-			if (pageNitems(p_p) == rp->psigPP) {
-				addPage(r->psigf);
-				rp->psigNpages++;
-				p_pid++;
-				p_p = newPage();
-				if (p_p == NULL) return NO_PAGE;
-			}
-			// put tuple in page
-			Bits psig = makePageSig(r, t);
-			putBits(p_p, pageNitems(p_p), psig);
-			addOneItem(p_p);
-			
-			rp->npsigs++;
-			putPage(r->psigf, p_pid, p_p);
-		} else {
-			// merge this psig with sig
-			Bits sig = newBits(psigBits(r));
-			getBits(p_p, pid, sig);
-			Bits psig = makePageSig(r, t);
-			orBits(sig, psig);
-			putBits(p_p, pid, sig);
-		}
+		// merge this psig with sig
+		Bits sig = newBits(psigBits(r));
+		getBits(p_p, pid, sig);
+		Bits psig = makePageSig(r, t);
+		orBits(sig, psig);
+		putBits(p_p, pid, sig);
 	}
 
 	// use page signature to update bit-slices
