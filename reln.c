@@ -10,6 +10,7 @@
 #include "page.h"
 #include "tuple.h"
 #include "tsig.h"
+#include "psig.h"
 #include "bits.h"
 #include "hash.h"
 // open a file with a specified suffix
@@ -55,10 +56,23 @@ Status newRelation(char *name, Count nattrs, float pF,
 	addPage(r->dataf); p->npages = 1; p->ntups = 0;
 	addPage(r->tsigf); p->tsigNpages = 1; p->ntsigs = 0;
 	addPage(r->psigf); p->psigNpages = 1; p->npsigs = 0;
-	addPage(r->bsigf); p->bsigNpages = 1; p->nbsigs = 0; // replace this
+	//addPage(r->bsigf); p->bsigNpages = 1; p->nbsigs = 0; // replace this
 	// Create a file containing "pm" all-zeroes bit-strings,
     // each of which has length "bm" bits
-	//TODO
+    p->bsigNpages = 0; p->nbsigs = 0;
+    int i = 0;
+	while(i < psigBits(r)) {
+		addPage(r->bsigf);
+		Page pg = getPage(bsigFile(r),i);
+		p->bsigNpages++;
+		for(int j = 0; j < maxBsigsPP(r); j++) {
+			Bits bSig = newBits(bsigBits(r));
+			//add bit string to page?
+			putBits(pg,j,bSig);
+			p->nbsigs++;
+			i++;
+		}
+	}
 	closeRelation(r);
 	return 0;
 }
@@ -145,9 +159,18 @@ PageID addToRelation(Reln r, Tuple t)
 
 	// use page signature to update bit-slices
 
-	//TODO
-
-	return nPages(r)-1;
+	pid = rp->npages-1;
+	Bits psig = makePageSig(r, t);
+	for(int i = 0; i < psigBits(r); i++) {
+		if(bitIsSet(psig,i)) {
+			Bits slice = newBits(bsigBits(r));
+			p = getPage(bsigFile(r),nBsigPages(r) - 1);
+			getBits(p,i,slice);	
+			setBit(slice,pid);	
+			putBits(p,i,slice);
+		}
+	}
+ 	return nPages(r)-1;
 }
 
 // displays info about open Reln (for debugging)
