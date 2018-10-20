@@ -26,7 +26,6 @@ Bits makeTupleSig(Reln r, Tuple t)
 			orBits(tsig, cw);
 		}
 	}
-	//printf("tsig = "); showBits(tsig); printf("\n");
 	return tsig;
 }
 
@@ -39,17 +38,13 @@ void findPagesUsingTupSigs(Query q)
 	Bits qsig = makeTupleSig(r, q->qstring);
 	unsetAllBits(q->pages);
 	File tsigs = tsigFile(r);
-	//Bits matches = newBits(nPages(r));
 	for (int i = 0; i < nTsigPages(r); i++) {
 		Page p = getPage(tsigs, i);
 		for (int j = 0; j < pageNitems(p); j++) {
 			Bits tsig = newBits(tsigBits(r));
 			getBits(p, j, tsig);
-			//printf("qsig = "); showBits(qsig); printf("\n");
-			//printf("tsig = "); showBits(tsig); printf("\n");
 			if (isSubset(qsig, tsig)) {
 				setBit(q->pages, i);
-				//printf("they match!\n");
 			}
 			q->nsigs++;
 		}

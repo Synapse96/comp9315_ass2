@@ -10,6 +10,7 @@
 #include "page.h"
 #include "tuple.h"
 #include "tsig.h"
+#include "psig.h"
 #include "bits.h"
 #include "hash.h"
 // open a file with a specified suffix
@@ -145,17 +146,37 @@ PageID addToRelation(Reln r, Tuple t)
 		t_p = newPage();
 		if (t_p == NULL) return NO_PAGE;
 	}
-	// put tuple in page
+	// put bits in page
 	Bits tsig = makeTupleSig(r, t);
-	putBits(p, pageNitems(t_p), tsig);
+	putBits(t_p, pageNitems(t_p), tsig);
 	addOneItem(t_p);
 	
 	rp->ntsigs++;
 	putPage(r->tsigf, t_pid, p);
 
 	// compute page signature and add to psigf
-
-	//TODO
+	PageID p_pid = rp->psigNpages-1;
+	Page p_p = getPage(r->psigf, p_pid);
+	if (pageNitems(p_p) == rp->psigPP) {
+		addPage(r->psigf);
+		rp->psigNpages++;
+		p_pid++;
+		p_p = newPage();
+		if (p_p == NULL) return NO_PAGE;
+	}
+	// put tuple in page
+	Bits psig = makePageSig(r, t);
+	putBits(p_p, pageNitems(p_p), psig);
+	addOneItem(p_p);
+	
+	// merge this psig with sig
+	Bits sig = newBits(psigBits(r));
+	getBits(p, pid, sig);
+	orBits(sig, psig);
+	putBits(p, pid, sig);
+	
+	rp->npsigs++;
+	putPage(r->psigf, p_pid, p);
 
 	// use page signature to update bit-slices
 
