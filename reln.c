@@ -188,12 +188,13 @@ PageID addToRelation(Reln r, Tuple t)
 		rp->npsigs++;
 		putPage(r->psigf, p_pid, p_p);
 	} else {
-		// merge this psig with sig
+		// merge this psig with sig		
 		Bits sig = newBits(psigBits(r));
-		getBits(p_p, pid, sig);
+		getBits(p_p, pageNitems(p_p) - 1, sig);
 		Bits psig = makePageSig(r, t);
 		orBits(sig, psig);
-		putBits(p_p, pid, sig);
+		putBits(p_p, pageNitems(p_p) - 1, sig);
+		putPage(r->psigf, p_pid, p_p);
 	}
 
 	// use page signature to update bit-slices

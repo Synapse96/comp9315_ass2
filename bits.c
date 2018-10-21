@@ -60,8 +60,6 @@ Bool isSubset(Bits b1, Bits b2)
 {
 	assert(b1 != NULL && b2 != NULL);
 	assert(b1->nbytes == b2->nbytes);
-	printf("qsig-2 = "); showBits(b1); printf("\n");
-	printf("psig-2 = "); showBits(b2); printf("\n");
 	for (int i = 0; i <= b1->nbytes - 1; i++) {
 	    for (int j = 0; j <= 7; j++) {
 	        int position = j + i + (i * 7);
