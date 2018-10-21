@@ -51,6 +51,8 @@ void findPagesUsingTupSigs(Query q)
 		q->nsigpages++;
 	}
 	
+	// The printf below is primarily for debugging
+	// Remove it before submitting this function
 	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
 
@@ -58,7 +60,7 @@ Bits codeword(char *attr_value, int m, int k)
 {
 	int nbits = 0; // count of set bits
 	Bits cword = newBits(m); // assuming m <= 32 bits
-	srandom(hash_any(attr_value, k));
+	srandom(hash_any(attr_value, strlen(attr_value)));
 	while (nbits < k) {
 		int i = random() % m;
 		if (!(bitIsSet(cword, i))) {
