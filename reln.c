@@ -13,6 +13,7 @@
 #include "psig.h"
 #include "bits.h"
 #include "hash.h"
+#include "util.h"
 // open a file with a specified suffix
 // - always open for both reading and writing
 
@@ -56,7 +57,30 @@ Status newRelation(char *name, Count nattrs, float pF,
 	addPage(r->dataf); p->npages = 1; p->ntups = 0;
 	addPage(r->tsigf); p->tsigNpages = 1; p->ntsigs = 0;
 	addPage(r->psigf); p->psigNpages = 1; p->npsigs = 0;
-	addPage(r->bsigf); p->bsigNpages = 1; p->nbsigs = 0; // replace this
+	// Create a file containing "pm" all-zeroes bit-strings,
+    // each of which has length "bm" bits
+    p->bsigNpages = 0; p->nbsigs = 0;
+    for (int i = 0; i < p->pm; i++) {
+    	if (p->bsigNpages == 0) {
+    		addPage(r->bsigf); 
+    		p->bsigNpages++;
+    	}
+    	PageID b_pid = p->bsigNpages - 1;
+    	Page b_p = getPage(r->bsigf, b_pid);
+    	if (pageNitems(b_p) == p->bsigPP) {
+    		addPage(r->bsigf);
+    		p->bsigNpages++;
+    		b_pid++;
+    		b_p = newPage();
+    		if (b_p == NULL) return NO_PAGE;
+    	}
+    	Bits bsig = newBits(p->bm);
+    	putBits(b_p, pageNitems(b_p), bsig);
+    	addOneItem(b_p);
+    	p->nbsigs++;
+    	putPage(r->bsigf, b_pid, b_p);
+    }
+    
 	closeRelation(r);
 	return 0;
 }
@@ -156,6 +180,7 @@ PageID addToRelation(Reln r, Tuple t)
 	// compute page signature and add to psigf
 	PageID p_pid = rp->psigNpages-1;
 	Page p_p = getPage(r->psigf, p_pid);
+	Bits psig = makePageSig(r, t);
 	if (NEWPAGE || rp->npsigs == 0) { // first entry or new page
 		if (pageNitems(p_p) == rp->psigPP) {
 			addPage(r->psigf);
@@ -165,7 +190,6 @@ PageID addToRelation(Reln r, Tuple t)
 			if (p_p == NULL) return NO_PAGE;
 		}
 		// put tuple in page
-		Bits psig = makePageSig(r, t);
 		putBits(p_p, pageNitems(p_p), psig);
 		addOneItem(p_p);
 		
@@ -175,32 +199,38 @@ PageID addToRelation(Reln r, Tuple t)
 		// merge this psig with sig		
 		Bits sig = newBits(psigBits(r));
 		getBits(p_p, pageNitems(p_p) - 1, sig);
-		Bits psig = makePageSig(r, t);
 		orBits(sig, psig);
 		putBits(p_p, pageNitems(p_p) - 1, sig);
 		putPage(r->psigf, p_pid, p_p);
 	}
 
 	// use page signature to update bit-slices
-	int b_pid = rp->npages-1;
-	Page b_p = getPage(bsigFile(r),nBsigPages(r) - 1);
-	if (pageNitems(b_p) == rp->bsigPP) {
-		addPage(r->bsigf);
-		rp->bsigNpages++;
-		//t_pid++;
-		t_p = newPage();
-		if (t_p == NULL) return NO_PAGE;
-	}
-	Bits psig = makePageSig(r, t);
-	for(int i = 0; i < psigBits(r); i++) {
-		if(bitIsSet(psig,i)) {
-			Bits slice = newBits(bsigBits(r));
-			getBits(b_p,i,slice);	
-			setBit(slice,pid);	
-			putBits(b_p,b_pid,slice);
-			putPage(r->psigf,i,b_p);
+	for (int i = 0; i < rp->pm; i++) {
+		if (bitIsSet(psig, i)) {
+			Bits bitSlice = newBits(bsigBits(r));
+			PageID bitSlicePageID = (i != 0) ? ((i-1) / rp->bsigPP) : (i / rp->bsigPP);
+			Page bitSlicePage = getPage(r->bsigf, bitSlicePageID);
+			int bitSliceIndex = (i != 0) ? ((i-1) % rp->bsigPP) : (i % rp->bsigPP);
+			getBits(bitSlicePage, bitSliceIndex, bitSlice);
+			setBit(bitSlice, rp->npsigs - 1);
+			putBits(bitSlicePage, bitSliceIndex, bitSlice);
+			putPage(r->bsigf, bitSlicePageID, bitSlicePage);
 		}
 	}
+	/*Bits psig = makePageSig(r, t);
+	for (int i = 0; i < rp->pm; i++) {
+		if (bitIsSet(psig, i)) {
+			PageID b_pid = (i != 0) ? ((i-1) / rp->bsigPP) : (i / rp->bsigPP);
+			Page b_p = getPage(r->bsigf, b_pid);
+			Bits bsig = newBits(bsigBits(r));
+			int b_i = (i != 0) ? ((i-1) % rp->bsigPP) : (i % rp->bsigPP);
+			getBits(b_p, b_i, bsig);
+			setBit(bsig, rp->npsigs - 1);
+			putBits(b_p, b_i, bsig);
+			putPage(r->bsigf, b_pid, b_p);
+		}
+	}*/
+	
  	return nPages(r)-1;
 }
 
