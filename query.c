@@ -58,7 +58,7 @@ void scanAndDisplayMatchingTuples(Query q)
 	Bits pages = q->pages;
 	Reln r = q->rel;
 	File dataF = dataFile(r);
-	int matches;
+	int matches = 0;
 	int n = getNumBits(pages);
 	for(int i = 0; i < n; i++) {
 		q->curpage = i;
@@ -72,7 +72,6 @@ void scanAndDisplayMatchingTuples(Query q)
 			Tuple t = getTupleFromPage(r,p,q->curtup);
 			q->ntuples++;
 			//check if tuple T == q->qstring
-			printf("checking tuple: %d\n",j);
 			if(tupleStringcmp(r,t,q->qstring)) {
 				showTuple(r,t);
 				matches++;
