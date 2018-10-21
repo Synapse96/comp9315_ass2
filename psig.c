@@ -39,7 +39,8 @@ void findPagesUsingPageSigs(Query q)
 			Bits psig = newBits(psigBits(r));
 			getBits(p, j, psig);
 			if (isSubset(qsig, psig)) {
-				setBit(q->pages, i);
+				int psid = (((i * maxPsigsPP(r)) + j));
+				setBit(q->pages, psid);
 			}
 			q->nsigs++;
 		}

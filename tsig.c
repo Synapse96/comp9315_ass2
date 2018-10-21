@@ -44,7 +44,9 @@ void findPagesUsingTupSigs(Query q)
 			Bits tsig = newBits(tsigBits(r));
 			getBits(p, j, tsig);
 			if (isSubset(qsig, tsig)) {
-				setBit(q->pages, i);
+				int tid = (((i * maxTsigsPP(r)) + j));
+				int pid = (tid != 0) ? ((tid-1) / maxTupsPP(r)) : (tid / maxTupsPP(r));
+				setBit(q->pages, pid);
 			}
 			q->nsigs++;
 		}
