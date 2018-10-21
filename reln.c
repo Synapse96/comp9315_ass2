@@ -56,23 +56,7 @@ Status newRelation(char *name, Count nattrs, float pF,
 	addPage(r->dataf); p->npages = 1; p->ntups = 0;
 	addPage(r->tsigf); p->tsigNpages = 1; p->ntsigs = 0;
 	addPage(r->psigf); p->psigNpages = 1; p->npsigs = 0;
-	//addPage(r->bsigf); p->bsigNpages = 1; p->nbsigs = 0; // replace this
-	// Create a file containing "pm" all-zeroes bit-strings,
-    // each of which has length "bm" bits
-    p->bsigNpages = 0; p->nbsigs = 0;
-    int i = 0;
-	while(i < psigBits(r)) {
-		addPage(r->bsigf);
-		Page pg = getPage(bsigFile(r),i);
-		p->bsigNpages++;
-		for(int j = 0; j < maxBsigsPP(r); j++) {
-			Bits bSig = newBits(bsigBits(r));
-			//add bit string to page?
-			putBits(pg,j,bSig);
-			p->nbsigs++;
-			i++;
-		}
-	}
+	addPage(r->bsigf); p->bsigNpages = 1; p->nbsigs = 0; // replace this
 	closeRelation(r);
 	return 0;
 }
@@ -198,16 +182,23 @@ PageID addToRelation(Reln r, Tuple t)
 	}
 
 	// use page signature to update bit-slices
-
-	pid = rp->npages-1;
+	int b_pid = rp->npages-1;
+	Page b_p = getPage(bsigFile(r),nBsigPages(r) - 1);
+	if (pageNitems(b_p) == rp->bsigPP) {
+		addPage(r->bsigf);
+		rp->bsigNpages++;
+		//t_pid++;
+		t_p = newPage();
+		if (t_p == NULL) return NO_PAGE;
+	}
 	Bits psig = makePageSig(r, t);
 	for(int i = 0; i < psigBits(r); i++) {
 		if(bitIsSet(psig,i)) {
 			Bits slice = newBits(bsigBits(r));
-			p = getPage(bsigFile(r),nBsigPages(r) - 1);
-			getBits(p,i,slice);	
+			getBits(b_p,i,slice);	
 			setBit(slice,pid);	
-			putBits(p,i,slice);
+			putBits(b_p,b_pid,slice);
+			putPage(r->psigf,i,b_p);
 		}
 	}
  	return nPages(r)-1;
