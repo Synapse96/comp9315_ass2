@@ -21,7 +21,6 @@ void findPagesUsingBitSlices(Query q)
 			Bits bsig = newBits(bsigBits(r));
 			int b_i = (i != 0) ? ((i-1) % maxBsigsPP(r)) : (i % maxBsigsPP(r));
 			getBits(p, b_i, bsig);
-			//showBits(bsig); printf("\n");
 			for (int j = 0; j < nPsigs(r); j++) {
 				if (!bitIsSet(bsig, j)) {
 					unsetBit(q->pages, j);
@@ -29,8 +28,4 @@ void findPagesUsingBitSlices(Query q)
 			}
 		}
 	}
-	
-	// The printf below is primarily for debugging
-	// Remove it before submitting this function
-	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }

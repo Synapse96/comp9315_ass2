@@ -52,10 +52,6 @@ void findPagesUsingTupSigs(Query q)
 		}
 		q->nsigpages++;
 	}
-	
-	// The printf below is primarily for debugging
-	// Remove it before submitting this function
-	printf("Matched Pages:"); showBits(q->pages); putchar('\n');
 }
 
 Bits codeword(char *attr_value, int m, int k)

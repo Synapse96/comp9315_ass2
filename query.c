@@ -58,7 +58,7 @@ void scanAndDisplayMatchingTuples(Query q)
 	Bits pages = q->pages;
 	Reln r = q->rel;
 	File dataF = dataFile(r);
-	int matches = 0;
+	int matches;
 	int n = getNumBits(pages);
 	for(int i = 0; i < n; i++) {
 		q->curpage = i;
@@ -81,6 +81,7 @@ void scanAndDisplayMatchingTuples(Query q)
 			q->nfalse++;
 		}
 	}
+
 }
 
 Bool tupleStringcmp(Reln r, Tuple t, char *qstring) {

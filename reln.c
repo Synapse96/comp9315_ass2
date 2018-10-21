@@ -58,27 +58,27 @@ Status newRelation(char *name, Count nattrs, float pF,
 	addPage(r->tsigf); p->tsigNpages = 1; p->ntsigs = 0;
 	addPage(r->psigf); p->psigNpages = 1; p->npsigs = 0;
 	// Create a file containing "pm" all-zeroes bit-strings,
-    // each of which has length "bm" bits
-    p->bsigNpages = 0; p->nbsigs = 0;
-    for (int i = 0; i < p->pm; i++) {
-    	if (p->bsigNpages == 0) {
-    		addPage(r->bsigf); 
-    		p->bsigNpages++;
-    	}
-    	PageID b_pid = p->bsigNpages - 1;
-    	Page b_p = getPage(r->bsigf, b_pid);
-    	if (pageNitems(b_p) == p->bsigPP) {
-    		addPage(r->bsigf);
-    		p->bsigNpages++;
-    		b_pid++;
-    		b_p = newPage();
-    		if (b_p == NULL) return NO_PAGE;
-    	}
-    	Bits bsig = newBits(p->bm);
-    	putBits(b_p, pageNitems(b_p), bsig);
-    	addOneItem(b_p);
-    	p->nbsigs++;
-    	putPage(r->bsigf, b_pid, b_p);
+	// each of which has length "bm" bits
+	p->bsigNpages = 0; p->nbsigs = 0;
+	for (int i = 0; i < p->pm; i++) {
+		if (p->bsigNpages == 0) {
+			addPage(r->bsigf); 
+			p->bsigNpages++;
+		}
+		PageID b_pid = p->bsigNpages - 1;
+		Page b_p = getPage(r->bsigf, b_pid);
+		if (pageNitems(b_p) == p->bsigPP) {
+			addPage(r->bsigf);
+			p->bsigNpages++;
+			b_pid++;
+			b_p = newPage();
+			if (b_p == NULL) return NO_PAGE;
+		}
+		Bits bsig = newBits(p->bm);
+		putBits(b_p, pageNitems(b_p), bsig);
+		addOneItem(b_p);
+		p->nbsigs++;
+		putPage(r->bsigf, b_pid, b_p);
     }
     
 	closeRelation(r);
@@ -207,29 +207,16 @@ PageID addToRelation(Reln r, Tuple t)
 	// use page signature to update bit-slices
 	for (int i = 0; i < rp->pm; i++) {
 		if (bitIsSet(psig, i)) {
-			Bits bitSlice = newBits(bsigBits(r));
-			PageID bitSlicePageID = (i != 0) ? ((i-1) / rp->bsigPP) : (i / rp->bsigPP);
-			Page bitSlicePage = getPage(r->bsigf, bitSlicePageID);
-			int bitSliceIndex = (i != 0) ? ((i-1) % rp->bsigPP) : (i % rp->bsigPP);
-			getBits(bitSlicePage, bitSliceIndex, bitSlice);
-			setBit(bitSlice, rp->npsigs - 1);
-			putBits(bitSlicePage, bitSliceIndex, bitSlice);
-			putPage(r->bsigf, bitSlicePageID, bitSlicePage);
-		}
-	}
-	/*Bits psig = makePageSig(r, t);
-	for (int i = 0; i < rp->pm; i++) {
-		if (bitIsSet(psig, i)) {
+			Bits bsig = newBits(bsigBits(r));
 			PageID b_pid = (i != 0) ? ((i-1) / rp->bsigPP) : (i / rp->bsigPP);
 			Page b_p = getPage(r->bsigf, b_pid);
-			Bits bsig = newBits(bsigBits(r));
 			int b_i = (i != 0) ? ((i-1) % rp->bsigPP) : (i % rp->bsigPP);
 			getBits(b_p, b_i, bsig);
 			setBit(bsig, rp->npsigs - 1);
 			putBits(b_p, b_i, bsig);
 			putPage(r->bsigf, b_pid, b_p);
 		}
-	}*/
+	}
 	
  	return nPages(r)-1;
 }
@@ -241,12 +228,12 @@ void relationStats(Reln r)
 	RelnParams *p = &(r->params);
 	printf("Global Info:\n");
 	printf("Dynamic:\n");
-    printf("  #items:  tuples: %d  tsigs: %d  psigs: %d  bsigs: %d\n",
+	printf("  #items:  tuples: %d  tsigs: %d  psigs: %d  bsigs: %d\n",
 			p->ntups, p->ntsigs, p->npsigs, p->nbsigs);
-    printf("  #pages:  tuples: %d  tsigs: %d  psigs: %d  bsigs: %d\n",
+	printf("  #pages:  tuples: %d  tsigs: %d  psigs: %d  bsigs: %d\n",
 			p->npages, p->tsigNpages, p->psigNpages, p->bsigNpages);
 	printf("Static:\n");
-    printf("  tups   #attrs: %d  size: %d bytes  max/page: %d\n",
+	printf("  tups   #attrs: %d  size: %d bytes  max/page: %d\n",
 			p->nattrs, p->tupsize, p->tupPP);
 	printf("  sigs   bits/attr: %d\n", p->tk);
 	printf("  tsigs  size: %d bits (%d bytes)  max/page: %d\n",
