@@ -71,12 +71,8 @@ void scanAndDisplayMatchingTuples(Query q)
 			q->curtup = j;
 			Tuple t = getTupleFromPage(r,p,q->curtup);
 			q->ntuples++;
-
-			//TESTING TSIGS
-			//Bits tSig = makeTupleSig(r,t);
-			//showBits(tSig);
-
 			//check if tuple T == q->qstring
+			printf("checking tuple: %d\n",j);
 			if(tupleStringcmp(r,t,q->qstring)) {
 				showTuple(r,t);
 				matches++;
@@ -91,17 +87,19 @@ void scanAndDisplayMatchingTuples(Query q)
 Bool tupleStringcmp(Reln r, Tuple t, char *qstring) {
 	char **tupVals = tupleVals(r,t);
     char *pt;
+    char temp[strlen(qstring)];
+    strcpy(temp,qstring);
     int i = 0;
-    pt = strtok (qstring,",");
+    pt = strtok (temp,",");
     while (pt != NULL) {
     	char *val = tupVals[i];
-        if(strcmp(pt,"?") != 0) {
-			if(strcmp(val,pt) != 0) {
-				return FALSE;
-			}
-        }
-        i++;
+    	if(strcmp(pt,"?") != 0) {
+    		if(strcmp(val,pt) != 0) {
+    			return FALSE;
+    		}
+    	}
         pt = strtok (NULL, ",");
+        i++;
     }
 	return TRUE;
 }
